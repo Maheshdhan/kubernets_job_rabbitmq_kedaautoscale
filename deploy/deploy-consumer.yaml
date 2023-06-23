@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rabbitmq-consumer-secret
+data:
+  RabbitMqHost: YW1xcDovL3VzZXI6UEFTU1dPUkRAcmFiYml0bXEuZGVmYXVsdC5zdmMuY2x1c3Rlci5sb2NhbDo1Njcy
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: rabbitmq-consumer
+  namespace: default
+spec:
+  jobTargetRef:
+    parallelism: 1 # [max number of desired pods](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#controlling-parallelism)
+    completions: 1 # [desired number of successfully finished pods](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#controlling-parallelism)
+    activeDeadlineSeconds: 60
+    template:
+      spec:
+        containers:
+          - name: rabbitmq-consumer
+            image: ghcr.io/kedacore/rabbitmq-client:v1.0
+            imagePullPolicy: Always
+            command:
+              - receive
+            args:
+              - "amqp://user:PASSWORD@rabbitmq.default.svc.cluster.local:5672"
+        restartPolicy: Never
+    backoffLimit: 4
+  pollingInterval: 10 # Optional. Default: 30 seconds
+  maxReplicaCount: 30 # Optional. Default: 100
+  successfulJobsHistoryLimit: 3 # Optional. Default: 100. How many completed jobs should be kept.
+  failedJobsHistoryLimit: 2 # Optional. Default: 100. How many failed jobs should be kept.
+  triggers:
+    - type: rabbitmq
+      metadata:
+        queueName: hello
+        host: RabbitMqHost
+        mode: QueueLength
+        value: "1"
+        activationValue: "0"
+      authenticationRef:
+        name: rabbitmq-consumer-trigger
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: rabbitmq-consumer-trigger
+  namespace: default
+spec:
+  secretTargetRef:
+    - parameter: host
+      name: rabbitmq-consumer-secret
+      key: RabbitMqHost
