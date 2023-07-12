@@ -14,7 +14,7 @@ spec:
   jobTargetRef:
     parallelism: 1 # [max number of desired pods](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#controlling-parallelism)
     completions: 1 # [desired number of successfully finished pods](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/#controlling-parallelism)
-    activeDeadlineSeconds: 60
+    activeDeadlineSeconds: 60 #if we do not specify it . it will keep job running always. # Optional. Specifies the duration in seconds relative to the startTime that the job may be active before the system tries to terminate it; value must be positive integer
     template:
       spec:
         containers:
@@ -25,12 +25,13 @@ spec:
               - receive
             args:
               - "amqp://user:PASSWORD@rabbitmq.default.svc.cluster.local:5672"
-        restartPolicy: Never
-    backoffLimit: 4
+        restartPolicy: Never # means that the container will not be restarted regardless of why it exited.
+    backoffLimit: 4 #Optional. Specifies the number of retries before marking this job failed. Defaults to 6
   pollingInterval: 10 # Optional. Default: 30 seconds
-  maxReplicaCount: 30 # Optional. Default: 100
+  # minReplicaCount: 2
+  maxReplicaCount: 5 # Optional. Default: 100
   successfulJobsHistoryLimit: 3 # Optional. Default: 100. How many completed jobs should be kept.
-  failedJobsHistoryLimit: 2 # Optional. Default: 100. How many failed jobs should be kept.
+  failedJobsHistoryLimit: 1 # Optional. Default: 100. How many failed jobs should be kept.
   triggers:
     - type: rabbitmq
       metadata:
@@ -38,7 +39,6 @@ spec:
         host: RabbitMqHost
         mode: QueueLength
         value: "1"
-        activationValue: "0"
       authenticationRef:
         name: rabbitmq-consumer-trigger
 ---

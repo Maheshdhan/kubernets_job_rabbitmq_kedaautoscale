@@ -1,4 +1,4 @@
-module github.com/kedacore/sample-go-rabbitmq/receive
+module github.com/Maheshdhan/kubernets_job_rabbitmq_kedaautoscale/tree/main/receive
 
 go 1.18
 

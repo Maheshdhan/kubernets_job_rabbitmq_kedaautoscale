@@ -56,11 +56,17 @@ func main() {
 	forever := make(chan bool)
 
 	go func() {
-		for d := range msgs {
-			log.Printf("Received a message: %s", d.Body)
-			time.Sleep(1 * time.Second)
-			d.Ack(false)
+		if(len(msgs)>0){
+			for d := range msgs {
+				log.Printf("Received a message: %s", d.Body)
+				time.Sleep(1 * time.Second)
+				d.Ack(false)
+			}
+		}else{
+			time.Sleep(10 * time.Second)
+			os.exit(1);
 		}
+		
 	}()
 
 	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
